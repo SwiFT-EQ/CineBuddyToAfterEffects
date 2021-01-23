@@ -2,8 +2,10 @@
 
 /*
     @TODO:
-        - Multiply floor grid scales by 2.54? This looks about right but will need to test with Test 2 or 3
+        - Multiply floor grid scales by 2.54?
+			- Currently have it multiplied and looks about right, but will need to verify with Test 2 or 3
         - Fix rotations
+		- Add null object to track ball location and rotation
 */
 
 /*
