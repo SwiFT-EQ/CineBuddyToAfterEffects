@@ -1,30 +1,6 @@
 ﻿//Written by: SwiFT EQ and CinderBlock
-
-/*
-    @TODO:
-        - Multiply floor grid scales by 2.54?
-			- Currently have it multiplied and looks about right, but will need to verify with Test 2 or 3
-        - Fix rotations
-		- Add null object to track ball location and rotation
-*/
-
-/*
-    NOTES:
-        - The direction the Y and Z axes point are the negative direction. X seems to point positive.
-        - ROTATIONS (in AE)
-            - Rotation around X is Pitch
-            - Rotation around Y is Yaw
-            - Rotation around Z is Roll
-        - LOCATION COORDINATE TRANSLATIONS
-            - (AE on left, RL on right)
-                - X =  Y
-                - Y = -Z
-                - Z =  X
-            - (RL on left, AE on right)
-                - X =  Z
-                - Y =  X
-                - Z = -Y
-*/
+//Version 1.0
+//Compatible with Cinematics Buddy version 0.9.4
 
 
 // GLOBAL VARIABLES //
@@ -52,6 +28,7 @@ function main()
     //Create objects and get a handle to the camera
     var Objects = CreateCompObjects(MyComp);
     var CameraLayer = Objects.CameraLayer;
+    var BallLayer = Objects.BallLayer;
     
     //Get user's file selection
     var ChosenFile = File.openDialog("Choose a Cinematics Buddy export file");
@@ -82,13 +59,19 @@ function main()
     var TimeSkip = 0;
     var CompTime = 0;
     var TimeArray = [];
-    var ZoomArray = [];
-    var PosXArray = [];
-    var PosYArray = [];
-    var PosZArray = [];
-    var RotXArray = [];
-    var RotYArray = [];
-    var RotZArray = [];
+    var CamZoomArray = [];
+    var CamPosXArray = [];
+    var CamPosYArray = [];
+    var CamPosZArray = [];
+    var CamRotXArray = [];
+    var CamRotYArray = [];
+    var CamRotZArray = [];
+    var BallPosXArray = [];
+    var BallPosYArray = [];
+    var BallPosZArray = [];
+    var BallRotXArray = [];
+    var BallRotYArray = [];
+    var BallRotZArray = [];
     
     //Parse all the lines to get useful data
     for(i = 0; i < Lines.length; ++i)
@@ -151,16 +134,22 @@ function main()
             }
 
             //Get the keyframe data and add to arrays
-            var LineToConvert = ThisLine.split("\t").slice(3, 6).join();
+            var LineToConvert = ThisLine.split("\t").slice(3, 10).join();
             Keyframe = ConvertKeyframeData(LineToConvert, MyComp);
             
-            ZoomArray.push(Keyframe.Zoom);
-            PosXArray.push(Keyframe.PosX);
-            PosYArray.push(Keyframe.PosY);
-            PosZArray.push(Keyframe.PosZ);
-            RotXArray.push(Keyframe.RotX);
-            RotYArray.push(Keyframe.RotY);
-            RotZArray.push(Keyframe.RotZ);
+            CamZoomArray.push(Keyframe.CamZoom);
+            CamPosXArray.push(Keyframe.CamPosX);
+            CamPosYArray.push(Keyframe.CamPosY);
+            CamPosZArray.push(Keyframe.CamPosZ);
+            CamRotXArray.push(Keyframe.CamRotX);
+            CamRotYArray.push(Keyframe.CamRotY);
+            CamRotZArray.push(Keyframe.CamRotZ);
+            BallPosXArray.push(Keyframe.BallPosX);
+            BallPosYArray.push(Keyframe.BallPosY);
+            BallPosZArray.push(Keyframe.BallPosZ);
+            BallRotXArray.push(Keyframe.BallRotX);
+            BallRotYArray.push(Keyframe.BallRotY);
+            BallRotZArray.push(Keyframe.BallRotZ);
             
             TimeArray.push(CompTime);
             CompTime += TimeSkip;
@@ -168,16 +157,22 @@ function main()
     }
 
     //Apply the arrays
-    CameraLayer.property("Camera Options").property("Zoom").setValuesAtTimes( TimeArray, ZoomArray);
-    CameraLayer.property("Transform").property("X Position").setValuesAtTimes(TimeArray, PosXArray);
-    CameraLayer.property("Transform").property("Y Position").setValuesAtTimes(TimeArray, PosYArray);
-    CameraLayer.property("Transform").property("Z Position").setValuesAtTimes(TimeArray, PosZArray);
-    CameraLayer.property("Transform").property("X Rotation").setValuesAtTimes(TimeArray, RotXArray);
-    CameraLayer.property("Transform").property("Y Rotation").setValuesAtTimes(TimeArray, RotYArray);
-    CameraLayer.property("Transform").property("Z Rotation").setValuesAtTimes(TimeArray, RotZArray);
+    CameraLayer.property("Camera Options").property("Zoom").setValuesAtTimes( TimeArray, CamZoomArray);
+    CameraLayer.property("Transform").property("X Position").setValuesAtTimes(TimeArray, CamPosXArray);
+    CameraLayer.property("Transform").property("Y Position").setValuesAtTimes(TimeArray, CamPosYArray);
+    CameraLayer.property("Transform").property("Z Position").setValuesAtTimes(TimeArray, CamPosZArray);
+    CameraLayer.property("Transform").property("X Rotation").setValuesAtTimes(TimeArray, CamRotXArray);
+    CameraLayer.property("Transform").property("Y Rotation").setValuesAtTimes(TimeArray, CamRotYArray);
+    CameraLayer.property("Transform").property("Z Rotation").setValuesAtTimes(TimeArray, CamRotZArray);
+    BallLayer.property("Transform").property("X Position").setValuesAtTimes(TimeArray, BallPosXArray);
+    BallLayer.property("Transform").property("Y Position").setValuesAtTimes(TimeArray, BallPosYArray);
+    BallLayer.property("Transform").property("Z Position").setValuesAtTimes(TimeArray, BallPosZArray);
+    BallLayer.property("Transform").property("X Rotation").setValuesAtTimes(TimeArray, BallRotXArray);
+    BallLayer.property("Transform").property("Y Rotation").setValuesAtTimes(TimeArray, BallRotYArray);
+    BallLayer.property("Transform").property("Z Rotation").setValuesAtTimes(TimeArray, BallRotZArray);
 
     //Clean up and return
-    app.endUndoGroup();    
+    app.endUndoGroup();
     return "Version " + VersionNumber;
 }
 
@@ -196,6 +191,9 @@ function CreateCompObjects(MyComp)
     //Labels in goals
     Objects.BlueGoalLabel = CreateBlueGoalLabel(MyComp);
     Objects.OrangeGoalLabel = CreateOrangeGoalLabel(MyComp);
+    
+    //Ball null object
+    Objects.BallLayer = CreateBall(MyComp);
     
     //Camera
     Objects.CameraLayer = CreateCamera(MyComp);
@@ -292,6 +290,17 @@ function CreateCamera(MyComp)
     return CameraLayer;
 }
 
+//Create ball
+function CreateBall(MyComp)
+{
+    var BallLayer = MyComp.layers.addNull();
+    BallLayer.name = "Ball Null Object";
+    BallLayer.threeDLayer = true;
+    BallLayer.property("Position").dimensionsSeparated = true;
+    
+    return BallLayer;
+}
+
 //Create text label filling blue goal
 function CreateBlueGoalLabel(MyComp)
 {
@@ -334,6 +343,7 @@ function CreateOrangeGoalLabel(MyComp)
 function RemoveCompObjects(Objects)
 {
     Objects.CameraLayer.remove();
+    Objects.BallLayer.remove();
     Objects.FloorLayer.remove();
     Objects.CeilingLayer.remove();
     Objects.LeftWallLayer.remove();
@@ -344,37 +354,33 @@ function RemoveCompObjects(Objects)
     Objects.OrangeGoalLabel.remove();
 }
 
-//Copy the sign from Y onto X
-function CopySign(x, y)
-{
-    if(y < 0)
-    {
-        if(x >= 0) { x *= -1; }
-    }
-    else
-    {
-        if(x < 0) { x *= -1; }
-    }
-
-    return x;
-}
-
 //Convert keyframe data from RL's coordinates to AE's coordinates
 function ConvertKeyframeData(ThisLine, MyComp)
 {
-    var Zoom = GetZoom(ThisLine.split(",").slice(0,1), MyComp);
-    var Position = GetPosition(ThisLine.split(",").slice(1,4));
-    var Rotation = GetRotation(ThisLine.split(",").slice(4,8));
+    //Camera data
+    var CamZoom = GetZoom(ThisLine.split(",").slice(0,1), MyComp);
+    var CamPosition = GetPosition(ThisLine.split(",").slice(1,4));
+    var CamRotation = GetRotation(ThisLine.split(",").slice(4,8));
+    
+    //Ball data (start at 9 because of double tab separator)
+    var BallPosition = GetPosition(ThisLine.split(",").slice(9,12));
+    var BallRotation = GetRotation(ThisLine.split(",").slice(13,17));
     
     //Create keyframe
     var Keyframe = new Object();
-    Keyframe.Zoom = Zoom;
-    Keyframe.PosX = Position.X;
-    Keyframe.PosY = Position.Y;
-    Keyframe.PosZ = Position.Z;
-    Keyframe.RotX = Rotation.X;
-    Keyframe.RotY = Rotation.Y;
-    Keyframe.RotZ = Rotation.Z;
+    Keyframe.CamZoom = CamZoom;
+    Keyframe.CamPosX = CamPosition.X;
+    Keyframe.CamPosY = CamPosition.Y;
+    Keyframe.CamPosZ = CamPosition.Z;
+    Keyframe.CamRotX = CamRotation.X;
+    Keyframe.CamRotY = CamRotation.Y;
+    Keyframe.CamRotZ = CamRotation.Z;
+    Keyframe.BallPosX = BallPosition.X;
+    Keyframe.BallPosY = BallPosition.Y;
+    Keyframe.BallPosZ = BallPosition.Z;
+    Keyframe.BallRotX = BallRotation.X;
+    Keyframe.BallRotY = BallRotation.Y;
+    Keyframe.BallRotZ = BallRotation.Z;
     
     return Keyframe;
 }
@@ -404,53 +410,37 @@ function GetPosition(PositionVals)
 //Rotation
 function GetRotation(QuatVals)
 {
-    //Use the old function for now
-    //New function will be based on: https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
-    return GetRotationOld(QuatVals);
-}
-
-function GetRotationOld(QuatVals)
-{
-    // NOTE: THIS OLD FUNCTION IS BAD IN THE PITCH ROTATION //
+    //https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
     
-    var quatX = parseFloat(QuatVals[0]);
-    var quatY = parseFloat(QuatVals[1]);
-    var quatZ = parseFloat(QuatVals[2]);
-    var quatW = parseFloat(QuatVals[3]);
-    
-    //Do the swaps here (once you figure them out) or maybe later, who knows
-    var qX = quatX;
-    var qY = quatY;
-    var qZ = quatZ;
-    var qW = quatW;
-
-    //Roll
-    var sinr_cosp = 2 * (qW * qX + qY * qZ);
-    var cosr_cosp = 1 - 2 * (qX * qX + qY * qY);
-    var Roll = Math.atan2(sinr_cosp, cosr_cosp);
+    var qX = parseFloat(QuatVals[0]);
+    var qY = parseFloat(QuatVals[1]);
+    var qZ = parseFloat(QuatVals[2]);
+    var qW = parseFloat(QuatVals[3]);
     
     //Pitch
-    var Pitch = 0;
-    var sinp = 2 * (qW * qY - qZ * qX);
-    if (Math.abs(sinp) >= 1)
-        Pitch = CopySign(Math.PI / 2, sinp); // use 90 degrees if out of range
-    else
-        Pitch = Math.asin(sinp);
-
+    var H1 = (2 * qY * qW) - (2 * qX * qZ);
+    var H2 = 1 - (2 * qY * qY) - (2 * qZ * qZ);
+    var Pitch = Math.atan2(H1, H2);
+    
     //Yaw
-    var siny_cosp = 2 * (qW * qZ + qX * qY);
-    var cosy_cosp = 1 - 2 * (qY * qY + qZ * qZ);
-    var Yaw = Math.atan2(siny_cosp, cosy_cosp);
-
+    var A1 = 2 * qX * qY;
+    var A2 = 2 * qZ * qW;
+    var Yaw = Math.asin(A1 + A2);
+    
+    //Roll
+    var B1 = (2 * qX * qW) - (2 * qY * qZ);
+    var B2 = 1 - (2 * qX * qX) - (2 * qZ * qZ);
+    var Roll = Math.atan2(B1, B2);
+    
     //Convert from radians to degrees
     var RadToDeg = 180 / Math.PI;
-    var NewRoll  = Roll  * RadToDeg;
     var NewPitch = Pitch * RadToDeg;
     var NewYaw   = Yaw   * RadToDeg;
-
+    var NewRoll  = Roll  * RadToDeg;
+    
     //Output the rotation
     var Rotation = new Object();
-    Rotation.X = NewPitch;
+    Rotation.X = NewPitch * -1;
     Rotation.Y = NewYaw;
     Rotation.Z = NewRoll * -1;
     
